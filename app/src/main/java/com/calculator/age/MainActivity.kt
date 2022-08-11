@@ -8,10 +8,12 @@ import android.widget.TextView
 import android.widget.Toast
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
     private var tvSelectedDate: TextView? = null
+    private var tvSelectedDateInMinutes: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,6 +21,7 @@ class MainActivity : AppCompatActivity() {
 
         val datePickerBtn: Button = findViewById(R.id.date_picker_btn)
         tvSelectedDate = findViewById(R.id.selected_date)
+        tvSelectedDateInMinutes = findViewById(R.id.selected_date_in_minutes)
 
         datePickerBtn.setOnClickListener {
             clickDatePicker()
@@ -32,7 +35,7 @@ class MainActivity : AppCompatActivity() {
         val month = myCalendar.get(Calendar.MONTH)
         val day = myCalendar.get(Calendar.DAY_OF_MONTH)
 
-        DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDayOfMonth ->
+        val datePicker = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDayOfMonth ->
             Toast.makeText(this, "Year $selectedYear, Month ${selectedMonth + 1}, Day $selectedDayOfMonth", Toast.LENGTH_LONG).show()
 
             val dateText = "$selectedDayOfMonth/${selectedMonth + 1}/$selectedYear"
@@ -40,8 +43,19 @@ class MainActivity : AppCompatActivity() {
 
             val format = SimpleDateFormat("dd/MM/yyyy", Locale.ENGLISH)
             val date = format.parse(dateText)
-            // TODO calculate date in minutes
-            // TODO set text view of minutes
-        }, year, month, day).show()
+
+            date?.let {
+                val selectedDateInMinutes = date.time / 60_000
+                val currentDate = format.parse(format.format(System.currentTimeMillis()))
+                currentDate?.let {
+                    val currentDateInMinutes = currentDate.time / 60_000
+                    val differenceInMinutes = currentDateInMinutes - selectedDateInMinutes
+
+                    tvSelectedDateInMinutes?.text = "$differenceInMinutes"
+                }
+            }
+        }, year, month, day)
+        datePicker.datePicker.maxDate = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1)
+        datePicker.show()
     }
 }
